@@ -109,3 +109,22 @@ details.help ul { font-size: 0.85rem; color: var(--muted); line-height: 1.55; }
 @media (max-width: 900px) {
   .topbar, .grid-2, .rec-list { grid-template-columns: 1fr; }
 }
+
+.load-banner {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.load-banner.wake {
+  background: rgba(61, 139, 253, 0.12);
+  border-color: rgba(61, 139, 253, 0.45);
+  color: #cfe3ff;
+}
+.load-banner.err {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #ffe0a3;
+}

@@ -181,6 +181,7 @@
     levelsBody: document.querySelector('#levels-table tbody'),
     alerts: document.getElementById('alerts-list'),
     sourcePill: document.getElementById('data-source-pill'),
+    banner: document.getElementById('load-banner'),
   };
 
   let chain = null;
@@ -333,15 +334,84 @@
     renderAlerts();
   }
 
-  function fetchChain(symbol) {
-    // 只有透過本機 server 開啟時才有真實資料
-    return fetch('/api/chain?symbol=' + encodeURIComponent(symbol))
+  function setBanner(kind, text) {
+    if (!els.banner) return;
+    if (!text) {
+      els.banner.hidden = true;
+      els.banner.textContent = '';
+      els.banner.className = 'load-banner';
+      return;
+    }
+    els.banner.hidden = false;
+    els.banner.className = 'load-banner ' + (kind || '');
+    els.banner.textContent = text;
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  function fetchChainOnce(symbol) {
+    return fetch('/api/chain?symbol=' + encodeURIComponent(symbol), { cache: 'no-store' })
       .then(function (res) {
         return res.json().then(function (data) {
           if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+          if (!data || !data.quote || !data.calls) throw new Error('回傳資料不完整');
           return data;
+        }, function () {
+          throw new Error('伺服器回傳無法解析（可能還在啟動）');
         });
       });
+  }
+
+  // 免費雲端冷啟動：多試幾次，期間顯示醒來提示；失敗不改用示範資料
+  function fetchChainWithRetry(symbol) {
+    const max = 6;
+    const waits = [0, 3000, 5000, 8000, 12000, 15000];
+    let lastErr = null;
+    let i = 0;
+    function attempt() {
+      if (i === 0) {
+        setBanner('wake', '正在連線…若免費雲端剛睡醒，可能要等 30～60 秒，請稍候。');
+        els.sourcePill.textContent = '醒來中';
+      } else {
+        setBanner('wake', '伺服器可能還在醒來（第 ' + (i + 1) + '/' + max + ' 次），請再等一下…');
+        els.sourcePill.textContent = '醒來中 ' + (i + 1) + '/' + max;
+      }
+      const wait = waits[i] || 0;
+      return sleep(wait).then(function () {
+        return fetchChainOnce(symbol);
+      }).then(function (data) {
+        setBanner('', '');
+        return data;
+      }).catch(function (err) {
+        lastErr = err;
+        i += 1;
+        if (i >= max) throw lastErr;
+        return attempt();
+      });
+    }
+    return attempt();
+  }
+
+  function renderLoadError(msg) {
+    chain = null;
+    els.price.textContent = '—';
+    els.chg.textContent = '—';
+    els.chg.className = 'chg';
+    els.meta.textContent = '無法載入';
+    els.sourcePill.textContent = '載入失敗';
+    els.recList.innerHTML = '<div class="muted">尚未載入真實資料（不會改用示範數字）</div>';
+    els.chainHead.innerHTML = '';
+    els.chainBody.innerHTML = '';
+    if (els.chainHint) els.chainHint.textContent = '';
+    els.levelsBody.innerHTML = '';
+    els.alerts.innerHTML = '';
+    const tip = document.createElement('li');
+    tip.className = 'warn';
+    tip.textContent = msg + ' 可按「更新」再試一次。';
+    els.alerts.appendChild(tip);
+    setBanner('err', msg);
   }
 
   function loadSymbol(sym) {
@@ -349,22 +419,24 @@
     els.symbol.value = s;
     els.meta.textContent = '載入中…';
     els.sourcePill.textContent = '載入中';
-    fetchChain(s)
+    els.btn.disabled = true;
+    fetchChainWithRetry(s)
       .then(function (data) {
         chain = data;
-        // 統一欄位保險
         if (!chain.levels) chain.levels = [];
         renderAll();
+        if (chain.note) {
+          const tip = document.createElement('li');
+          tip.textContent = chain.note;
+          els.alerts.insertBefore(tip, els.alerts.firstChild);
+        }
       })
       .catch(function (err) {
-        console.warn('真實資料失敗，改用示範資料', err);
-        chain = buildMockChain(s);
-        chain.note = '真實資料暫不可用（' + (err.message || err) + '），已改用示範資料。請用「開啟網站.bat」啟動。';
-        renderAll();
-        const tip = document.createElement('li');
-        tip.className = 'warn';
-        tip.textContent = chain.note;
-        els.alerts.insertBefore(tip, els.alerts.firstChild);
+        console.warn('真實資料載入失敗（不改用示範）', err);
+        renderLoadError('真實資料暫不可用：' + (err && err.message ? err.message : err));
+      })
+      .then(function () {
+        els.btn.disabled = false;
       });
   }
 
@@ -374,7 +446,7 @@
   });
   els.slider.addEventListener('input', function () {
     syncRiskTags();
-    if (chain) {
+    if (chain && chain.quote) {
       renderRecs();
       renderChain();
     }
