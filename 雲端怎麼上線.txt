@@ -1,0 +1,26 @@
+免費雲端上線（實驗用｜Render）
+================================
+
+目標：手機打開一個網址就能看 Covered Call 觀察站。
+費用：Render 免費方案（閒置會睡著，第一次打開可能要等 30～60 秒）。
+
+你需要：
+1. 一個免費 GitHub 帳號
+2. 一個免費 Render 帳號（用 GitHub 登入最快）
+
+步驟：
+1. 把整個 covered-call-desk 資料夾上傳成一個 GitHub 倉庫
+   （或請我幫你準備好再一起推）
+2. 打開 https://render.com → New → Web Service
+3. 連到那個倉庫
+4. 設定大致會自動讀到：
+   - Build：pip install -r requirements.txt
+   - Start：gunicorn -b 0.0.0.0:$PORT --timeout 120 server:app
+5. 選 Free，按 Deploy
+6. 等幾分鐘出現網址，例如 https://covered-call-desk.onrender.com
+7. 手機瀏覽器打開那個網址；資料來源應顯示 yahoo-delayed
+
+注意：
+- 一天只看幾次完全夠用；免費機偶爾會慢或抓不到 Yahoo，屬正常。
+- 這是個人實驗觀察，不是正式下單行情。
+- 本機仍可用 start.bat 開。

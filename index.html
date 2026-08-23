@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Covered Call 觀察站 · TSLA</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- 1 標的列 -->
+    <header class="topbar">
+      <div class="brand">
+        <h1>Covered Call 觀察站</h1>
+        <p class="muted">單一代號觀察 · 想收權利金、盡量不被 call 走</p>
+      </div>
+      <div class="ticker-block">
+        <label class="field">
+          <span>代號</span>
+          <input id="symbol-input" type="text" value="TSLA" maxlength="12" />
+        </label>
+        <button id="btn-load" type="button">更新</button>
+        <div class="quote">
+          <div class="price" id="spot-price">—</div>
+          <div class="chg" id="spot-chg">—</div>
+          <div class="meta" id="spot-meta">IV —</div>
+        </div>
+      </div>
+      <div class="risk-block">
+        <div class="risk-label">風險偏好（影響建議帶）</div>
+        <input id="risk-slider" type="range" min="0" max="2" step="1" value="0" />
+        <div class="risk-tags">
+          <span data-v="0" class="on">保守 Δ≈0.20</span>
+          <span data-v="1">平衡 Δ≈0.30</span>
+          <span data-v="2">積極 Δ≈0.35</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- 2 建議帶 -->
+      <section class="card" id="rec-card">
+        <div class="card-h">
+          <h2>建議帶</h2>
+          <span class="pill" id="data-source-pill">示範資料</span>
+        </div>
+        <p class="card-sub">依你的風險偏好，挑出目前較符合「收租、盡量留股」的候選（非保證）。</p>
+        <div id="rec-list" class="rec-list"></div>
+      </section>
+
+      <div class="grid-2">
+        <!-- 3 選擇權分佈 -->
+        <section class="card grow">
+          <div class="card-h">
+            <h2>選擇權分佈（Call）</h2>
+            <div class="legend">
+              <span><i class="swatch prem"></i>顏色≈權利金厚薄</span>
+              <span><i class="swatch band"></i>框線＝落在舒適帶</span>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="chain-table" class="chain">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="hint" id="chain-hint"></p>
+        </section>
+
+        <div class="side-col">
+          <!-- 4 位階 -->
+          <section class="card">
+            <div class="card-h"><h2>位階／距離</h2></div>
+            <table class="levels" id="levels-table">
+              <thead><tr><th>角色</th><th>價格</th><th>距離</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </section>
+
+          <!-- 5 注意事項 -->
+          <section class="card">
+            <div class="card-h"><h2>注意事項</h2></div>
+            <ul class="alerts" id="alerts-list"></ul>
+          </section>
+        </div>
+      </div>
+
+      <!-- 6 參數說明 -->
+      <details class="card help">
+        <summary>參數說明（點開）</summary>
+        <ul>
+          <li><strong>Delta</strong>：可粗略當成「到期時股價高於履約價」的機率尺。數字越大，越容易被 call 走，權利金通常也越厚。</li>
+          <li><strong>DTE</strong>：距離到期還有幾天。常見甜蜜區約 30～45 天（時間價值與彈性較平衡）。</li>
+          <li><strong>價外％</strong>：履約價比現價高多少。越高越不容易被叫走，但權利金通常越薄。</li>
+          <li><strong>權利金％</strong>：權利金 ÷ 股價，方便跨履約價比較「收租厚度」。</li>
+          <li>預設尺參考：保守偏 Δ≈0.20、約 10～20% 價外、30～45 DTE。可依風險滑桿調整。</li>
+        </ul>
+      </details>
+    </main>
+
+    <footer class="foot muted">
+      透過本機服務讀取延遲選擇權資料（成功時右上角顯示 yahoo-delayed；失敗則暫用示範資料）。僅供個人觀察整理，非投資建議。
+    </footer>
+  </div>
+  <script src="./js/app.js"></script>
+</body>
+</html>

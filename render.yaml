@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: covered-call-desk
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -b 0.0.0.0:$PORT --timeout 120 server:app
+    envVars:
+      - key: CHAIN_CACHE_TTL
+        value: "300"
+      - key: PYTHON_VERSION
+        value: "3.12.8"
